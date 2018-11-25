@@ -14,4 +14,5 @@ dependencies {
     compile group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.2.3'
     compile group: 'com.google.guava', name: 'guava', version: '27.0-jre'
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.4'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
 }
