@@ -13,6 +13,14 @@ import java.util.concurrent.TimeUnit;
 public class ADIndexClients {
 
     public Set<ADIndex> exactQuery(String query) {
+        if(query.equalsIgnoreCase("Spring")) {
+            try {
+                //spring 查询额外等待5s
+                Thread.sleep(5000L);
+            } catch (InterruptedException ignore) {
+
+            }
+        }
         TestUtils.wait("ADIndexClients", "exactQuery");
         return Sets.newHashSet(new ADIndex(query, "exact-" + RandomStringUtils.randomAlphanumeric(8)));
     }

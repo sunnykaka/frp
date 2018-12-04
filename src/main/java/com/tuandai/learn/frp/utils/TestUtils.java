@@ -2,6 +2,7 @@ package com.tuandai.learn.frp.utils;
 
 import com.google.common.base.Stopwatch;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 public interface TestUtils {
@@ -17,8 +18,8 @@ public interface TestUtils {
         } finally {
             stopwatch.stop();
         }
-        System.out.printf("%s方法%s.%s花费: %d ms \n", Thread.currentThread().getName(),
-                className, method, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        System.out.printf("%s方法%s.%s花费: %d ms, 当前时间: %s \n", Thread.currentThread().getName(),
+                className, method, stopwatch.elapsed(TimeUnit.MILLISECONDS), LocalDateTime.now());
 
     }
 

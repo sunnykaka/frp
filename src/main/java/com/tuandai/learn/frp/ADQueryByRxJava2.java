@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,7 +114,7 @@ public class ADQueryByRxJava2 {
 //            return userClients.analyzeUserBehaviorByQuery(userQuery.getUserId(), userQuery.getQuery());
 //        });
 
-        BlockingQueue<IndexRankResult> rankResultQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RankQuery> rankQueryQueue = new LinkedBlockingQueue<>();
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -129,20 +130,41 @@ public class ADQueryByRxJava2 {
 
         final AtomicInteger count = new AtomicInteger(0);
 
-        Flowable.zip(Flowable.fromIterable(queryList), userInfoFlowable, queryMatchResults,
-                (userQuery, userInfo, adIndices) -> new RankQuery(userQuery, userInfo.userExtend, userInfo.userBehavior, adIndices)
-        ).parallel().runOn(Schedulers.newThread()
-//                californiaRankClients.rankIndex(rankQuery.adIndices, rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend)
-        ).sequential().subscribe(rankQuery -> {
-            IndexRankResult x = (IndexRankResult) CompletableFuture.anyOf(
-                    CompletableFuture.supplyAsync(() -> virginiaRankClients.rankIndex(rankQuery.adIndices,
-                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend)),
-                    CompletableFuture.supplyAsync(() -> californiaRankClients.rankIndex(rankQuery.adIndices,
-                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend))
-            ).get(60, TimeUnit.SECONDS);
-            System.out.printf("第%d个结果, 当前耗时%d ms\n", count.addAndGet(1), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-            System.out.println("indexRankResult: " + x);
+        Flowable.zip(Flowable.fromIterable(queryList).subscribeOn(Schedulers.newThread()), userInfoFlowable.subscribeOn(Schedulers.newThread()), queryMatchResults.subscribeOn(Schedulers.newThread()),
+                (userQuery, userInfo, adIndices) -> {
+                    System.out.println("start zip: " + LocalDateTime.now());
+                    Thread.sleep(3000L);
+                    return new RankQuery(userQuery, userInfo.userExtend, userInfo.userBehavior, adIndices);
+                }
+        ).parallel().runOn(Schedulers.newThread()).sequential().subscribe(rankQuery -> {
+            System.out.println("start subscribe: " + LocalDateTime.now());
+            Thread.sleep(3000L);
+
+//            IndexRankResult x = (IndexRankResult) CompletableFuture.anyOf(
+//                    CompletableFuture.supplyAsync(() -> virginiaRankClients.rankIndex(rankQuery.adIndices,
+//                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend)),
+//                    CompletableFuture.supplyAsync(() -> californiaRankClients.rankIndex(rankQuery.adIndices,
+//                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend))
+//            ).get(60, TimeUnit.SECONDS);
+//            System.out.printf("第%d个结果, 当前耗时%d ms\n", count.addAndGet(1), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+//            System.out.println("indexRankResult: " + x);
         });
+
+        System.out.printf("第%d个结果, 当前耗时%d ms\n", count.addAndGet(1), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
+        Thread.sleep(30000L);
+//        ).parallel().runOn(Schedulers.newThread()
+////                californiaRankClients.rankIndex(rankQuery.adIndices, rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend)
+//        ).sequential().subscribe(rankQuery -> {
+//            IndexRankResult x = (IndexRankResult) CompletableFuture.anyOf(
+//                    CompletableFuture.supplyAsync(() -> virginiaRankClients.rankIndex(rankQuery.adIndices,
+//                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend)),
+//                    CompletableFuture.supplyAsync(() -> californiaRankClients.rankIndex(rankQuery.adIndices,
+//                            rankQuery.userQuery.getQueryContext(), rankQuery.userBehavior, rankQuery.userExtend))
+//            ).get(60, TimeUnit.SECONDS);
+//            System.out.printf("第%d个结果, 当前耗时%d ms\n", count.addAndGet(1), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+//            System.out.println("indexRankResult: " + x);
+//        });
 
 
 //        Flowable.zip(Flowable.fromIterable(queryList), userInfoFlowable, queryMatchResults,
