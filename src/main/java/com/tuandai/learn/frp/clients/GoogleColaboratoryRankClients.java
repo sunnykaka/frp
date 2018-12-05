@@ -42,6 +42,7 @@ public class GoogleColaboratoryRankClients {
             //模拟响应时间较慢
             Thread.sleep(sleepSeconds * 1000);
         } catch (InterruptedException ignore) {
+            ignore.printStackTrace();
 
         } finally {
             stopwatch.stop();

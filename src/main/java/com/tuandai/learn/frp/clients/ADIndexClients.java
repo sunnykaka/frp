@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class ADIndexClients {
 
     public Set<ADIndex> exactQuery(String query) {
-        if(query.equalsIgnoreCase("Spring")) {
+        if(query.equalsIgnoreCase("Spring Framework")) {
             try {
                 //spring 查询额外等待5s
                 Thread.sleep(5000L);

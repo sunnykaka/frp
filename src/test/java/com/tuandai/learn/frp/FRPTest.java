@@ -5,19 +5,17 @@ import com.google.common.collect.Lists;
 import com.tuandai.learn.frp.clients.ADIndexClients;
 import com.tuandai.learn.frp.clients.GoogleColaboratoryRankClients;
 import com.tuandai.learn.frp.clients.UserClients;
-import com.tuandai.learn.frp.domain.IndexRankResult;
+import com.tuandai.learn.frp.domain.AD;
 import com.tuandai.learn.frp.domain.QueryContext;
 import com.tuandai.learn.frp.domain.UserQuery;
+import com.tuandai.learn.frp.services.ADQueryByPlain;
+import com.tuandai.learn.frp.services.ADQueryByRxJava2;
+import com.tuandai.learn.frp.services.ADQueryIF;
 import com.tuandai.learn.frp.services.ADService;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 public class FRPTest {
@@ -33,41 +31,40 @@ public class FRPTest {
     private UserClients userClients = new UserClients();
 
     @Test
-    public void testPlainJava() throws InterruptedException, TimeoutException, ExecutionException {
+    public void testPlainJava() throws Exception  {
 
-        Stopwatch stopwatch = Stopwatch.createStarted();
-
-        IndexRankResult indexRankResult = (IndexRankResult) CompletableFuture.anyOf(
-                CompletableFuture.supplyAsync(() -> virginiaRankClients.rankIndex(new HashSet<>(),
-                        null, null, null)),
-                CompletableFuture.supplyAsync(() -> californiaRankClients.rankIndex(new HashSet<>(),
-                        null, null, null))
-        ).get(60, TimeUnit.SECONDS);
-
-        stopwatch.stop();
-
-        System.out.println("耗时: " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-        System.out.println(indexRankResult);
+        runTest(new ADQueryByPlain(adService, adIndexClients,
+                virginiaRankClients, californiaRankClients, userClients));
 
     }
 
-
-
     @Test
-    public void testRxJava() throws InterruptedException {
+    public void testRxJava() throws Exception {
+
+        runTest(new ADQueryByRxJava2(adService, adIndexClients,
+                virginiaRankClients, californiaRankClients, userClients));
+    }
+
+    private void runTest(ADQueryIF adQuery) throws Exception {
 
         List<UserQuery> userQueryList = Lists.newArrayList(
                 new UserQuery("RxJava", "1", new QueryContext()),
-                new UserQuery("Spring", "2", new QueryContext()),
+                new UserQuery("Spring Framework", "2", new QueryContext()),
                 new UserQuery("Design Pattern", "3", new QueryContext())
         );
 
-        ADQueryByRxJava2 adQuery = new ADQueryByRxJava2(adService, adIndexClients,
-                virginiaRankClients, californiaRankClients, userClients);
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        List<AD> adList = null;
 
-        adQuery.process(userQueryList);
+        try {
+            adList = adQuery.process(userQueryList);
 
+        } finally {
+            stopwatch.stop();
+            System.out.println("耗时: " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            System.out.println(adList);
 
+        }
     }
 
 
