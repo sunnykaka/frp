@@ -25,17 +25,79 @@ import java.util.concurrent.TimeUnit;
 public class RxJavaTest {
 
     @Test
-    public void observableDemo() throws Exception {
+    public void observableObserverDemo() throws Exception {
 
         Observable.create((ObservableOnSubscribe<String>) source -> {
             source.onNext("data 1");
             source.onNext("data 2");
             source.onNext("data 3");
-        }).map(String::toUpperCase)
+            source.onComplete();
+        }).subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                System.out.println("onSubscribe");
+            }
+
+            @Override
+            public void onNext(String s) {
+                System.out.println(s);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                System.out.println("error");
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onComplete() {
+                System.out.println("complete!");
+            }
+        });
+    }
+
+    @Test
+    public void observableObserverErrorDemo() throws Exception {
+
+        Observable.create((ObservableOnSubscribe<String>) source -> {
+            source.onNext("data 1");
+            source.onNext("data 2");
+            source.onNext("data 3");
+            throw new RuntimeException();
+        }).subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                System.out.println("onSubscribe");
+            }
+
+            @Override
+            public void onNext(String s) {
+                System.out.println(s);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                System.out.println("error");
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onComplete() {
+                System.out.println("complete!");
+            }
+        });
+    }
+
+
+
+    @Test
+    public void observableDemo() throws Exception {
+
+        Observable.just("data 1", "data 2", "data 3")
+                .map(String::toUpperCase)
                 .filter(data -> !data.contains("3"))
                 .doOnComplete(() -> System.out.println("complete!"))
                 .subscribe(System.out::println);
-
 
     }
 
