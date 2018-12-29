@@ -15,10 +15,13 @@ import com.tuandai.learn.frp.services.ADService;
 import io.reactivex.*;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.parallel.ParallelFlowable;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 
@@ -102,19 +105,83 @@ public class RxJavaTest {
     }
 
     @Test
+    public void backPressureErrorDemo() throws Exception {
+
+        Flowable.create(source -> {
+            for(int i = 1; i <= 128; i++) {
+                source.onNext(i);
+            }
+        }, BackpressureStrategy.ERROR)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(Schedulers.newThread())
+                .subscribe(
+                        System.out::println,
+                        e -> {
+                            System.out.println("error");
+                            e.printStackTrace();
+                        }
+                );
+
+        Thread.sleep(1000L);
+
+    }
+
+    @Test
     public void backPressureDemo() throws Exception {
 
         Flowable.create(source -> {
             for(int i = 1; i <= 129; i++) {
                 source.onNext(i);
             }
-        }, BackpressureStrategy.ERROR)
+        }, BackpressureStrategy.BUFFER)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(Schedulers.newThread())
                 .subscribe(System.out::println);
 
         Thread.sleep(1000L);
 
+    }
+
+    @Test
+    public void threadDemo() throws Exception {
+
+        Flowable.create(source -> {
+            printThread("create");
+            for(int i = 1; i <= 3; i++) {
+                source.onNext(i);
+            }
+        }, BackpressureStrategy.BUFFER)
+//                .subscribeOn(Schedulers.newThread())
+//                .observeOn(Schedulers.newThread())
+                .subscribe(s -> {
+                    System.out.println(s);
+                    printThread("subscribe");
+                });
+
+        Thread.sleep(1000L);
+
+    }
+
+    @Test
+    public void parallelDemo() throws Exception {
+
+        Flowable.range(1, 3)
+                .parallel()
+                .runOn(Schedulers.newThread())
+                .map(x -> x * 2)
+                .sequential()
+                .collect(() -> new LinkedBlockingQueue<Integer>(), LinkedBlockingQueue::add)
+                .blockingGet()
+                .forEach(System.out::println);
+
+        Thread.sleep(1000L);
+
+    }
+
+
+
+    public void printThread(String methodName) {
+        System.out.printf("method: %s, running in thread: %s \n", methodName, Thread.currentThread().getName());
     }
 
 
